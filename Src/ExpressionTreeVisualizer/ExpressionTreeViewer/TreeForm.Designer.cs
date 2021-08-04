@@ -42,6 +42,7 @@
             this.expressionTreeView.Name = "expressionTreeView";
             this.expressionTreeView.Size = new System.Drawing.Size(945, 660);
             this.expressionTreeView.TabIndex = 0;
+            this.expressionTreeView.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Check_KeyDown);
             // 
             // expressionTextBox
             // 
@@ -53,6 +54,7 @@
             this.expressionTextBox.ReadOnly = true;
             this.expressionTextBox.Size = new System.Drawing.Size(945, 130);
             this.expressionTextBox.TabIndex = 1;
+            this.expressionTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Check_KeyDown);
             // 
             // TreeForm
             // 

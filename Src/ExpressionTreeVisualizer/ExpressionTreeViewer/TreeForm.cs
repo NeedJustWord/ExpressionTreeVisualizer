@@ -22,5 +22,13 @@ namespace ExpressionTreeViewer
             node.Nodes.ForEach(n => treeNode.Nodes.Add(this.GetTreeNode(n)));
             return treeNode;
         }
+
+        private void Check_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                Close();
+            }
+        }
     }
 }
