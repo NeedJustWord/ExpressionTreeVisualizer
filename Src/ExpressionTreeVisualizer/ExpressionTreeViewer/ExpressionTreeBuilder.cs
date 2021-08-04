@@ -112,7 +112,7 @@ namespace ExpressionTreeViewer
                 var expr = expression as NewExpression;
                 node = new ExpressionTreeNode(string.Format("NewExpression Arguments:"));
                 for (int i = 0; i < expr.Arguments.Count; i++)
-                    node.Nodes.Add(GetExpressionTreeNode(expr.Arguments[i], expr.Members[i].Name));
+                    node.Nodes.Add(GetExpressionTreeNode(expr.Arguments[i], expr.Members?[i].Name));
             }
             else if (expression is ParameterExpression)
             {
