@@ -64,7 +64,7 @@ namespace ExpressionTreeViewer
             else if (expression is IndexExpression)
             {
                 var expr = expression as IndexExpression;
-                node = new ExpressionTreeNode(string.Format("IndexExpression [{0}] Arguments:", expr.Indexer.Name));
+                node = new ExpressionTreeNode(string.Format("IndexExpression [{0}] Arguments:", expr.Indexer?.Name));
                 expr.Arguments.ToList().ForEach(a => node.Nodes.Add(GetExpressionTreeNode(a)));
             }
             else if (expression is InvocationExpression)
