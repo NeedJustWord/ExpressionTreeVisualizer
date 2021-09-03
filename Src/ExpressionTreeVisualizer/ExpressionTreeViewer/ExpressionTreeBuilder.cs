@@ -13,7 +13,7 @@ namespace ExpressionTreeViewer
             if (expression is BinaryExpression)
             {
                 var expr = expression as BinaryExpression;
-                node = new ExpressionTreeNode(string.Format("BinaryExpression: [{0}]", expr.NodeType));
+                node = new ExpressionTreeNode(string.Format("BinaryExpression: [{0}-{1}]", expr.NodeType, GetTypeName(expr.Type)));
                 node.Nodes.Add(GetExpressionTreeNode(expr.Left, "Left"));
                 node.Nodes.Add(GetExpressionTreeNode(expr.Right, "Right"));
             }
@@ -21,12 +21,12 @@ namespace ExpressionTreeViewer
             {
                 var expr = expression as BlockExpression;
                 node = new ExpressionTreeNode(string.Format("BlockExpression Expressions:"));
-                expr.Expressions.ToList().ForEach(a => node.Nodes.Add(GetExpressionTreeNode(a)));
+                node.Nodes.AddRange(expr.Expressions.Select(e => GetExpressionTreeNode(e)));
             }
             else if (expression is ConditionalExpression)
             {
                 var expr = expression as ConditionalExpression;
-                node = new ExpressionTreeNode(string.Format("ConditionalExpression: [{0}]", expr.NodeType));
+                node = new ExpressionTreeNode(string.Format("ConditionalExpression: [{0}]", GetTypeName(expr.Type)));
                 node.Nodes.Add(GetExpressionTreeNode(expr.Test, "Test"));
                 node.Nodes.Add(GetExpressionTreeNode(expr.IfTrue, "IfTrue"));
                 node.Nodes.Add(GetExpressionTreeNode(expr.IfFalse, "IfFalse"));
@@ -34,38 +34,49 @@ namespace ExpressionTreeViewer
             else if (expression is ConstantExpression)
             {
                 var expr = expression as ConstantExpression;
-                var value = expr.Value;
-                string valueStr;
-                if (value == null) valueStr = "<null>";
-                else if (value is string) valueStr = "\"" + value + "\"";
-                else if (value is char) valueStr = "\'" + value + "\'";
-                else valueStr = value.ToString();
+                var valueStr = expr.Value.AsString();
                 node = new ExpressionTreeNode(string.Format("ConstantExpression [{0}]: {1}", GetTypeName(expr.Type), valueStr));
+                node.ExpressionString = valueStr;
             }
             else if (expression is DebugInfoExpression)
             {
                 var expr = expression as DebugInfoExpression;
+                node = new ExpressionTreeNode("DebugInfoExpression:");
+                var document = expr.Document;
+                node.Nodes.Add(new ExpressionTreeNode("FileName: " + document.FileName));
+                node.Nodes.Add(new ExpressionTreeNode("Language: " + document.Language));
+                node.Nodes.Add(new ExpressionTreeNode("LanguageVendor: " + document.LanguageVendor));
+                node.Nodes.Add(new ExpressionTreeNode("DocumentType: " + document.DocumentType));
+                node.Nodes.Add(new ExpressionTreeNode("StartLine: " + expr.StartLine));
+                node.Nodes.Add(new ExpressionTreeNode("StartColumn: " + expr.StartColumn));
+                node.Nodes.Add(new ExpressionTreeNode("EndLine: " + expr.EndLine));
+                node.Nodes.Add(new ExpressionTreeNode("EndColumn: " + expr.EndColumn));
             }
             else if (expression is DefaultExpression)
             {
                 var expr = expression as DefaultExpression;
-                node = new ExpressionTreeNode(string.Format("DefaultExpression: [{0}]", GetTypeName(expr.Type)));
+                node = new ExpressionTreeNode(string.Format("DefaultExpression: [{0}-{1}]", GetType(expr.Type), GetTypeName(expr.Type)));
             }
             else if (expression is DynamicExpression)
             {
                 var expr = expression as DynamicExpression;
                 node = new ExpressionTreeNode(string.Format("DynamicExpression [{0}] Arguments:", GetTypeName(expr.DelegateType)));
-                expr.Arguments.ToList().ForEach(a => node.Nodes.Add(GetExpressionTreeNode(a)));
+                node.Nodes.AddRange(expr.Arguments.Select(e => GetExpressionTreeNode(e)));
             }
             else if (expression is GotoExpression)
             {
                 var expr = expression as GotoExpression;
+                node = new ExpressionTreeNode(string.Format("GotoExpression: [{0}]", GetTypeName(expr.Type)));
+                node.Nodes.Add(new ExpressionTreeNode("Kind => " + expr.Kind));
+                node.Nodes.Add(new ExpressionTreeNode("Target => " + expr.Target));
+                node.Nodes.Add(CheckNull(expr.Value, "Value"));
             }
             else if (expression is IndexExpression)
             {
                 var expr = expression as IndexExpression;
                 node = new ExpressionTreeNode(string.Format("IndexExpression [{0}] Arguments:", expr.Indexer?.Name));
-                expr.Arguments.ToList().ForEach(a => node.Nodes.Add(GetExpressionTreeNode(a)));
+                node.Nodes.Add(GetExpressionTreeNode(expr.Object, "Object"));
+                node.Nodes.AddRange(expr.Arguments.Select(e => GetExpressionTreeNode(e)));
             }
             else if (expression is InvocationExpression)
             {
@@ -77,6 +88,9 @@ namespace ExpressionTreeViewer
             else if (expression is LabelExpression)
             {
                 var expr = expression as LabelExpression;
+                node = new ExpressionTreeNode(string.Format("LabelExpression [{0}]", GetTypeName(expr.Type)));
+                node.Nodes.Add(new ExpressionTreeNode("Target => " + expr.Target));
+                node.Nodes.Add(CheckNull(expr.DefaultValue, "DefaultValue"));
             }
             else if (expression is LambdaExpression)
             {
@@ -92,10 +106,14 @@ namespace ExpressionTreeViewer
             else if (expression is ListInitExpression)
             {
                 var expr = expression as ListInitExpression;
+                node = new ExpressionTreeNode("ListInitExpression");
+                node.Nodes.Add(GetExpressionTreeNode(expr.NewExpression));
             }
             else if (expression is LoopExpression)
             {
                 var expr = expression as LoopExpression;
+                node = new ExpressionTreeNode("LoopExpression");
+                node.Nodes.Add(GetExpressionTreeNode(expr.Body, "Body"));
             }
             else if (expression is MemberExpression)
             {
@@ -117,6 +135,8 @@ namespace ExpressionTreeViewer
             else if (expression is NewArrayExpression)
             {
                 var expr = expression as NewArrayExpression;
+                node = new ExpressionTreeNode(string.Format("NewArrayExpression [{0}]", GetTypeName(expr.Type)));
+                expr.Expressions.ToList().ForEach(e => node.Nodes.Add(GetExpressionTreeNode(e)));
             }
             else if (expression is NewExpression)
             {
@@ -133,14 +153,34 @@ namespace ExpressionTreeViewer
             else if (expression is RuntimeVariablesExpression)
             {
                 var expr = expression as RuntimeVariablesExpression;
+                node = new ExpressionTreeNode(string.Format("RuntimeVariablesExpression [{0}]", GetTypeName(expr.Type)));
+                node.Nodes.AddRange(expr.Variables.Select(e => GetExpressionTreeNode(e)));
             }
             else if (expression is SwitchExpression)
             {
                 var expr = expression as SwitchExpression;
+                node = new ExpressionTreeNode(string.Format("SwitchExpression [{0}]", GetTypeName(expr.Type)));
+                node.Nodes.AddRange(expr.Cases.Select((c, i) =>
+                {
+                    var n = new ExpressionTreeNode("Case");
+                    n.Nodes.AddRange(c.TestValues.Select(t => GetExpressionTreeNode(t, "Value")));
+                    n.Nodes.Add(GetExpressionTreeNode(c.Body, "Body"));
+                    return n;
+                }));
             }
             else if (expression is TryExpression)
             {
                 var expr = expression as TryExpression;
+                node = new ExpressionTreeNode(string.Format("TryExpression [{0}]", GetTypeName(expr.Type)));
+                node.Nodes.Add(GetExpressionTreeNode(expr.Body, "Try"));
+                node.Nodes.AddRange(expr.Handlers.Select((c, i) =>
+                {
+                    var n = new ExpressionTreeNode("Catch");
+                    n.Nodes.Add(GetExpressionTreeNode(c.Filter, "Filter"));
+                    n.Nodes.Add(GetExpressionTreeNode(c.Body, "Body"));
+                    return n;
+                }));
+                node.Nodes.Add(GetExpressionTreeNode(expr.Finally, "Finally"));
             }
             else if (expression is TypeBinaryExpression)
             {
@@ -158,11 +198,12 @@ namespace ExpressionTreeViewer
                 node = new ExpressionTreeNode(string.Format("Unknown Node [{0}-{1}]: {2}", GetTypeName(expression.GetType()), expression.NodeType, expression));
             if (prefix != null)
                 node.Text = string.Format("{0} => {1}", prefix, node.Text);
-            node.ExpressionString = expression.ToString();
+            if (node.ExpressionString == null)
+                node.ExpressionString = expression.ToString();
             return node;
         }
 
-        public static string GetTypeName(Type type)
+        private static string GetTypeName(Type type)
         {
             if (type == typeof(byte)) return "byte";
             if (type == typeof(sbyte)) return "sbyte";
@@ -194,11 +235,44 @@ namespace ExpressionTreeViewer
             }
             if (type.IsArray)
             {
-                var elementType = GetTypeName(type.GetElementType());
-                var ranks = string.Join("", Enumerable.Repeat("[]", type.GetArrayRank()));
-                return elementType + ranks;
+                var elementType = type.GetElementType();
+                while (elementType.IsArray)
+                {
+                    elementType = elementType.GetElementType();
+                }
+                var elementTypeName = GetTypeName(elementType);
+
+                var ranks = type.Name.Substring(type.Name.IndexOf('['));
+                if (type.Name.Contains("]["))
+                {
+                    ranks = string.Join("", ranks.Replace("][", "]|[").Split('|').Reverse());
+                }
+
+                return elementTypeName + ranks;
             }
             return type.Name;
+        }
+
+        private static string GetType(Type type)
+        {
+            return type.IsSubclassOf(typeof(Delegate)) ? "delegate" :
+                type.IsClass ? "class" :
+                type.IsValueType ? "struct" :
+                type.IsInterface ? "interface" : "";
+        }
+
+        private static ExpressionTreeNode CheckNull(Expression expression, string name)
+        {
+            ExpressionTreeNode node;
+            if (expression == null)
+            {
+                node = new ExpressionTreeNode($"{name} => null");
+            }
+            else
+            {
+                node = GetExpressionTreeNode(expression, name);
+            }
+            return node;
         }
     }
 
