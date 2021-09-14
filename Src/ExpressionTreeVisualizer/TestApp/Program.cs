@@ -50,9 +50,12 @@ namespace TestApp
                 Dynamic(),
                 Goto(),
                 Return(),
-                Index(),
+                Index1(),
+                Index2(),
+                IndexParam(),
                 Invocation(),
                 Label(),
+                LabelDefault(),
                 Lambda(),
                 ListInit(),
                 Loop(),
@@ -146,10 +149,23 @@ namespace TestApp
             return Expression.MakeGoto(GotoExpressionKind.Return, Expression.Label(), Constant(1), typeof(long));
         }
 
-        static IndexExpression Index()
+        static IndexExpression Index1()
         {
             var array = Constant(new int[] { 0, 1, 2, 3 });
-            return Expression.ArrayAccess(array, Constant(0));
+            return Expression.ArrayAccess(array, Constant(2));
+        }
+
+        static IndexExpression Index2()
+        {
+            var array = Constant(new int[,] { { 0, 1, 2, 3 }, { 10, 11, 12, 13, }, });
+            return Expression.ArrayAccess(array, Constant(1), Constant(3));
+        }
+
+        static IndexExpression IndexParam()
+        {
+            ParameterExpression arrayExpr = Expression.Parameter(typeof(int[]), "Array");
+            ParameterExpression indexExpr = Expression.Parameter(typeof(int), "Index");
+            return Expression.ArrayAccess(arrayExpr, indexExpr);
         }
 
         static InvocationExpression Invocation()
@@ -160,6 +176,11 @@ namespace TestApp
         static LabelExpression Label()
         {
             return Expression.Label(Expression.Label("label"));
+        }
+
+        static LabelExpression LabelDefault()
+        {
+            return Expression.Label(Expression.Label(typeof(string), "labelType"), Constant("str"));
         }
 
         static LambdaExpression Lambda()
